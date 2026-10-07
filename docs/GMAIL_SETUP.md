@@ -1,13 +1,15 @@
 # Gmail 聚合收件箱使用说明
 
+> 新部署推荐使用统一 `MAIL_CREDENTIALS_KEY`；旧 `GMAIL_CREDENTIALS_KEY` 继续兼容。升级时先保留旧值，按[迁移指南](MAIL_CREDENTIALS.md)由主管理员主动迁移。
+
 OmniMail 通过固定的 `imap.gmail.com:993` TLS 连接聚合多个 Gmail 账号的 INBOX。它不使用
 Google Cloud Project 或 OAuth Client；用户打开正文后会同步标记 Gmail 已读，但不会归档、
 移动、删除、星标或发信。
 
 ## 部署者配置
 
-1. 在 Worker 的 **Variables & Secrets** 中新增 Secret `GMAIL_CREDENTIALS_KEY`。
-2. 值至少为 32 个随机 UTF-8 字节，并与 iCloud、Linux DO Mail 的密钥分开保存。
+1. 在 Worker 的 **Variables & Secrets** 中新增 Secret `MAIL_CREDENTIALS_KEY`。
+2. 值至少为 32 个随机 UTF-8 字节，所有外部邮箱可共用此配置。
 3. 运行 `npm run db:migrate` 后重新部署。
 4. 可选：把 `GMAIL_IMAP_ENABLED` 设为 `false`，紧急隐藏入口并停止定时入队。
 
@@ -22,8 +24,9 @@ Google Cloud Project 或 OAuth Client；用户打开正文后会同步标记 Gma
 4. 在 OmniMail 左侧打开 **Gmail 邮箱 → 管理 Gmail 账号**。
 5. 填写账号名称、完整邮箱地址和 Google 显示的 16 位应用密码。
 
-应用密码可按原显示格式粘贴空格。请勿填写 Google 账号主密码。某些 Workspace、
-Advanced Protection 或仅使用安全密钥进行两步验证的账号可能没有应用密码入口。
+应用密码可按原显示格式粘贴空格，普通空格、不间断空格等分隔符都会被自动忽略。请勿填写
+Google 账号主密码。某些 Workspace、Advanced Protection 或仅使用安全密钥进行两步验证的账号
+可能没有应用密码入口。
 
 ## 同步与已读行为
 

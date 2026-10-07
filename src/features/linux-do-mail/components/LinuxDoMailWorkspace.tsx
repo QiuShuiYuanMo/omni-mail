@@ -100,7 +100,7 @@ function MessageReader({ message, folder, loading, remoteImagesEnabled, onBack }
           scrollTopLabel={t('回到顶部')} subject={subject}
           subjectPinned={readerScroll.subjectPinned} onScrollTop={readerScroll.scrollToTop} />
         {outgoing ? <DeliveryStatus message={message} />
-          : <span className="icloud-source-badge is-imap">{t('IMAP 只读')}</span>}
+          : <span className="icloud-source-badge is-imap">{t('打开后同步已读')}</span>}
       </header>
       <div ref={readerRoot} className="reader-content icloud-reader-content">
         <div className="icloud-reader-inner">
@@ -283,7 +283,14 @@ export function LinuxDoMailWorkspace({ remoteImagesEnabled, canSend }: {
       const result = message.direction === 'outgoing'
         ? await api.linuxDoMailSentMessage(message.id, controller.signal)
         : await api.linuxDoMailMessage(message.id, controller.signal)
-      if (!controller.signal.aborted) setOpened(result.message)
+      if (!controller.signal.aborted) {
+        setOpened(result.message)
+        if (typeof result.message.isRead === 'boolean') {
+          setMessages((current) => current.map((item) => item.id === message.id
+            ? { ...item, isRead: result.message.isRead }
+            : item))
+        }
+      }
     } catch (openError) {
       if (!controller.signal.aborted) setError(errorMessage(openError))
     } finally {
@@ -400,7 +407,7 @@ export function LinuxDoMailWorkspace({ remoteImagesEnabled, canSend }: {
         {error && <p className="list-error" role="alert"><AlertCircle size={15} />{error}</p>}
         {loading ? <div className="icloud-loading"><Spinner size={22} />{t('正在读取 Linux DO Mail 配置…')}</div>
           : !enabled ? <Empty icon={<KeyRound size={24} />} title={t('Linux DO Mail 功能尚未启用')}
-            description={t('在 Worker Variables & Secrets 中配置至少 32 字节的 LINUX_DO_MAIL_CREDENTIALS_KEY，然后重新部署。')} />
+            description={t('在 Worker Variables & Secrets 中配置至少 32 字节的 MAIL_CREDENTIALS_KEY，然后重新部署。')} />
           : !account ? <Empty icon={<Mail size={24} />} title={t('还没有连接 Linux DO 邮箱')}
             description={t('连接后即可在 OmniMail 中收件、搜索，并通过官方 SMTP 安全发信。')}
             action={<button className="button button--primary" type="button"

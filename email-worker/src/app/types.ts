@@ -70,6 +70,10 @@ export type MailQueueJob =
   | YandexMailSyncJob
   | ExternalMailSyncJob
 
+export interface NotificationQueueJob {
+  id: string
+}
+
 export interface BackupWorkflowParams {
   trigger?: 'scheduled' | 'manual' | 'enable'
   requestedBy?: string
@@ -89,6 +93,7 @@ export interface Env {
   DB: D1Database
   MAIL_BUCKET: R2Bucket
   MAIL_QUEUE: Queue<MailQueueJob>
+  NOTIFICATION_QUEUE?: Queue<NotificationQueueJob>
   AI?: Ai
   ASSETS: Fetcher
   BACKUP_BUCKET?: R2Bucket
@@ -106,6 +111,7 @@ export interface Env {
   SENDFLARE_FROM?: string
   SENDFLARE_DOMAIN_CONFIGS?: string
   TOTP_ENCRYPTION_KEY?: string
+  MAIL_CREDENTIALS_KEY?: string
   ICLOUD_CREDENTIALS_KEY?: string
   LINUX_DO_MAIL_CREDENTIALS_KEY?: string
   GMAIL_CREDENTIALS_KEY?: string
@@ -115,9 +121,9 @@ export interface Env {
   QQ_MAIL_CREDENTIALS_KEY?: string
   QQ_MAIL_IMAP_ENABLED?: string
   NAVER_MAIL_CREDENTIALS_KEY?: string
-  NAVER_MAIL_IMAP_ENABLED?: string
   YANDEX_MAIL_CREDENTIALS_KEY?: string
-  YANDEX_MAIL_IMAP_ENABLED?: string
+  TELEGRAM_BOT_TOKEN?: string
+  TELEGRAM_WEBHOOK_SECRET?: string
   TURNSTILE_SITE_KEY?: string
   TURNSTILE_SECRET_KEY?: string
   LINUX_DO_CLIENT_ID?: string

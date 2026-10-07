@@ -1,4 +1,5 @@
 import { enAdmin } from './admin'
+import { enMailCredentials } from './mail-credentials'
 import { enAdminMail } from './admin-mail'
 import { enApi } from './api'
 import { enErrors } from './errors'
@@ -18,8 +19,10 @@ import { enRateLimit } from './rate-limit'
 import { enQqMail } from './qq-mail'
 import { enSecurity } from './security'
 import { enVersion } from './version'
+import { enTelegram } from './telegram'
 
 export const englishTranslations: Record<string, string> = {
+  ...enMailCredentials,
   ...enAdmin,
   ...enAdminMail,
   ...enInvites,
@@ -32,6 +35,7 @@ export const englishTranslations: Record<string, string> = {
   ...enMailboxSettings,
   ...enRateLimit,
   ...enVersion,
+  ...enTelegram,
   ...enICloud,
   ...enLinuxDoMail,
   ...enGmail,
