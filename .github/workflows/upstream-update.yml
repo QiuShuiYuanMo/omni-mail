@@ -32,7 +32,7 @@ jobs:
           git fetch --no-tags upstream main
           git checkout upstream/main -- .
           git checkout HEAD -- .github/workflows/upstream-update.yml
-          rm -f .github/workflows/ci.yml .github/workflows/sync.yml .github/workflows/sync.yaml
+          find .github/workflows -type f ! -name 'upstream-update.yml' -delete
           git add -A
           if git diff --cached --quiet; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
