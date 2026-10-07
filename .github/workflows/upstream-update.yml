@@ -1,0 +1,71 @@
+name: Upstream Update and Deploy
+
+on:
+  schedule:
+    - cron: "29 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  CLOUDFLARE_ACCOUNT_ID: 9ac6048aa8fdd19bd60e7de83b64222e
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+jobs:
+  sync-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sync upstream source
+        id: sync
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add upstream https://github.com/mibgb65-cloud/OmniMail.git
+          git fetch --no-tags upstream main
+          git checkout upstream/main -- .
+          rm -f .github/workflows/ci.yml .github/workflows/sync.yml .github/workflows/sync.yaml
+          git add -A
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No upstream source changes."
+          else
+            git commit -m "chore: sync upstream OmniMail"
+            git push origin HEAD:main
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy updated Worker
+        if: env.CLOUDFLARE_API_TOKEN != '' && (steps.sync.outputs.changed == 'true' || github.event_name == 'workflow_dispatch')
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci
+          node --input-type=module <<'JS'
+          import fs from 'node:fs'
+          const config = JSON.parse(fs.readFileSync('wrangler.jsonc', 'utf8'))
+          const db = config.d1_databases.find((binding) => binding.binding === 'DB')
+          if (!db) throw new Error('DB binding not found')
+          db.database_id = '54a21dc8-7f3c-4a09-9bfc-67dc7ce98377'
+          delete db.database_name
+          const mail = config.r2_buckets.find((binding) => binding.binding === 'MAIL_BUCKET')
+          const backup = config.r2_buckets.find((binding) => binding.binding === 'BACKUP_BUCKET')
+          if (!mail || !backup) throw new Error('R2 bindings not found')
+          Object.assign(mail, { bucket_name: 'omni-mail-mail-bucket', preview_bucket_name: 'omni-mail-mail-bucket' })
+          Object.assign(backup, { bucket_name: 'omni-mail-backups', preview_bucket_name: 'omni-mail-backups' })
+          fs.writeFileSync('.wrangler-production.json', JSON.stringify(config, null, 2) + '\n')
+          JS
+          npm run check
+          npm test
+          node scripts/deploy.mjs --config .wrangler-production.json --minify
+
+      - name: Explain skipped deployment
+        if: env.CLOUDFLARE_API_TOKEN == '' && (steps.sync.outputs.changed == 'true' || github.event_name == 'workflow_dispatch')
+        run: echo "Upstream source synced; deployment skipped because CLOUDFLARE_API_TOKEN is not configured."
